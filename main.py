@@ -5,10 +5,16 @@ Find maalepinde in .xlsx document
 
 import re
 
+import nltk
 import pandas as pd
 from enum import Enum
 from typing import Hashable
+
+from nltk.corpus import stopwords
 from pandas import DataFrame, Series
+
+from wordCloud import word_cloud
+from string import punctuation
 
 excel_file = 'Fagtabel_Excel_2023_all.xlsx'
 
@@ -94,10 +100,29 @@ def hent_maalepinde(fagnr: int) -> list[str]:
     # Use findall to extract matches
     matches = MAALEPIND_PATTERN.findall(best_maalepinde)
 
+    nltk.download('stopwords')
+
+    def remove_stopwords(maalepind_list: list[str]) -> list[str]:
+
+        # Remove stopwords
+        maalpind_removed_stopwords: list[str] = []
+        for maalepind in maalepind_list:
+            for char in punctuation:
+                maalepind = maalepind.replace(char, '')
+
+            for stopword in stopwords.words('danish'):
+                maalepind = maalepind.replace(stopword, '')
+            # filtered_words = [word for word in maalepind.split() if word.lower() not in stopwords.words('danish')]
+            maalpind_removed_stopwords.append(maalepind)
+
+            return maalpind_removed_stopwords
+
     # Remove leading and trailing whitespaces from each match
     result_list = [match.strip() for match in matches]
 
-    return result_list
+    result = remove_stopwords(result_list)
+
+    return result
 
 
 if __name__ == '__main__':
@@ -110,3 +135,5 @@ if __name__ == '__main__':
 
     for m in sw_test:
         print(m)
+
+    word_cloud()
