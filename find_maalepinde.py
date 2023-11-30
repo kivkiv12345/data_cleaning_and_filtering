@@ -58,13 +58,16 @@ def hent_maalepinde(excel_file: str, fagnr: int | Sequence[int] = None, sheet: s
 
     df: dict[str, DataFrame] = pd.read_excel(excel_file, sheet_name=sheet)
 
+    if sheet is not None:
+        df = {'': df}
+
     # Stores all maalepinde for the provided fagnr,
     # of which we will find the ones with the higest score.
     tmp_maalepinde: dict[int, set[tuple[int, str]]] = {}
 
     if isinstance(fagnr, (int, str)):
         fagnr = {str(fagnr), }
-    else:
+    elif fagnr is not None:
         assert isinstance(fagnr, Sequence)
         fagnr = {str(fagnr) for fagnr in fagnr}
 
@@ -100,14 +103,21 @@ def hent_maalepinde(excel_file: str, fagnr: int | Sequence[int] = None, sheet: s
                 if fagnr is None or column in fagnr:
 
                     # We will match every row, when no fagnr is specified. But we still need to find the headers first.
-                    if fagnr is None and None not in {fagnummer_column_idx, maalpinde_column_idx, score_column_idx}:
+                    if fagnr is None and None in {fagnummer_column_idx, maalpinde_column_idx, score_column_idx}:
                         continue
 
                     # By now, we should've found all the headers, and know the location of our columns-of-interest.
                     assert None not in {fagnummer_column_idx, maalpinde_column_idx, score_column_idx}
 
-                    assert column.isnumeric()  # .isnumeric() probably also includes floats
-                    key = int(column)
+                    if index != fagnummer_column_idx:
+                        continue
+
+                    # assert row[1][fagnummer_column_idx]  # .isnumeric() probably also includes floats
+                    try:
+                        key = int(row[1][fagnummer_column_idx])
+                    except ValueError:
+                        continue
+
                     if key not in tmp_maalepinde:
                         tmp_maalepinde[key] = set()
                     tmp_maalepinde[key].add((LEVEL_ORDER.index(row[1][score_column_idx]), row[1][maalpinde_column_idx]))
@@ -132,7 +142,7 @@ if __name__ == '__main__':
     #         for i in n[1]:
     #             print(i)
 
-    sw_test = hent_maalepinde(EXCEL_FILE, 16484, only_best=True)
+    sw_test = hent_maalepinde(EXCEL_FILE, None, only_best=True, sheet=3)
     no_stopwords = remove_stopwords(sw_test)
     for m in sw_test.values():
         for n in m:
