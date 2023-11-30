@@ -7,8 +7,6 @@ def word_cloud():
     nltk.download('stopwords')
 
     print(stopwords.words("danish"))
-    # Remove coma and full stop
-    # Make a list of these words
 
 
 if __name__ == '__main__':

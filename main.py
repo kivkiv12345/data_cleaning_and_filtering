@@ -5,11 +5,14 @@ Find maalepinde in .xlsx document
 
 import re
 
+import matplotlib
 import nltk
+import numpy as np
 import pandas as pd
 from enum import Enum
 from typing import Hashable
 
+from matplotlib import pyplot as plt
 from nltk.corpus import stopwords
 from pandas import DataFrame, Series
 
@@ -102,27 +105,52 @@ def hent_maalepinde(fagnr: int) -> list[str]:
 
     nltk.download('stopwords')
 
-    def remove_stopwords(maalepind_list: list[str]) -> list[str]:
+    # Remove stopwords and punctuation
+    def remove_stopwords(maalepind_list):
+        maalpind_removed_stopwords = []
+        # For fast lookups of stopwords
+        stopword_set = set(stopwords.words('danish'))
 
-        # Remove stopwords
-        maalpind_removed_stopwords: list[str] = []
         for maalepind in maalepind_list:
-            for char in punctuation:
-                maalepind = maalepind.replace(char, '')
+            # Remove punctuation
+            maalepind_no_punct = ''.join(char for char in maalepind if char not in punctuation)
 
-            for stopword in stopwords.words('danish'):
-                maalepind = maalepind.replace(stopword, '')
-            # filtered_words = [word for word in maalepind.split() if word.lower() not in stopwords.words('danish')]
-            maalpind_removed_stopwords.append(maalepind)
+            # Remove stopwords
+            words_without_stopwords = [word for word in maalepind_no_punct.split() if word.lower() not in stopword_set]
 
-            return maalpind_removed_stopwords
+            # Join the words back into a sentence
+            maalepind_no_stopwords = ' '.join(words_without_stopwords)
 
-    # Remove leading and trailing whitespaces from each match
-    result_list = [match.strip() for match in matches]
+            maalpind_removed_stopwords.append(maalepind_no_stopwords)
 
-    result = remove_stopwords(result_list)
+        return maalpind_removed_stopwords
 
-    return result
+    def draw_diagram_words_used(data):
+        # Extract words and their occurrences for plotting
+        words_occurrences = {}
+        for maalepind_no_stopwords in data:
+            words = maalepind_no_stopwords.split()
+            for word in words:
+                if word in words_occurrences:
+                    words_occurrences[word] += 1
+                else:
+                    words_occurrences[word] = 1
+
+        # Get the top 10 words and their occurrences
+        top_words = sorted(words_occurrences.items(), key=lambda x: x[1], reverse=True)[:10]
+        words, occurrences = zip(*top_words)
+
+        font1 = {'family': 'serif', 'color': 'black', 'size': 30}
+        font2 = {'family': 'serif', 'color': 'green', 'size': 15}
+
+        plt.barh(words, occurrences, color="darkgreen")
+        plt.title("Word Occurrence", fontdict=font1)
+        plt.xlabel("Occurrence", fontdict=font2)
+        plt.ylabel("Words", fontdict=font2)
+        plt.show()
+
+    # Draw the diagram using the processed data
+    draw_diagram_words_used(remove_stopwords(matches))
 
 
 if __name__ == '__main__':
