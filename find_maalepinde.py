@@ -11,8 +11,7 @@ import pandas as pd
 from enum import Enum
 
 from utils import MAALEPINDE_FORMAT
-from visualization_and_wordcloud import draw_diagram_words_used, remove_stopwords
-from wordCloud import word_cloud
+from visualization_and_wordcloud import draw_diagram_words_used, remove_stopwords, word_cloud
 from pandas import DataFrame, Series
 from typing import Hashable, Sequence
 
@@ -185,4 +184,4 @@ if __name__ == '__main__':
     #
     # draw_diagram_words_used(remove_stopwords(sw_test))
 
-    word_cloud()
+    word_cloud(no_stopwords)

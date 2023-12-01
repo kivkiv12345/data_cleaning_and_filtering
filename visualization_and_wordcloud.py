@@ -4,6 +4,7 @@ import nltk
 import matplotlib
 import numpy as np
 from string import punctuation
+from wordcloud import WordCloud
 from nltk.corpus import stopwords
 from utils import MAALEPINDE_FORMAT
 from matplotlib import pyplot as plt
@@ -69,4 +70,18 @@ def draw_diagram_words_used(maalepinde: list[str]):
     plt.title("Word Occurrence", fontdict=font1)
     plt.xlabel("Occurrence", fontdict=font2)
     plt.ylabel("Words", fontdict=font2)
+    plt.show()
+
+
+def word_cloud(data: list[str]) -> None:
+    meta_text: str = ' '.join(data)
+    dc: dict = {}
+    for word in meta_text.split():
+        if word not in dc:
+            dc[word] = 0
+        dc[word] += 1
+    wc = WordCloud(background_color='black', width=800, height=500).generate_from_frequencies(dc)
+    plt.axis("off")
+
+    plt.imshow(wc)
     plt.show()
