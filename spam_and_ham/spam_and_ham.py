@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import string
 from collections import Counter
+from os import path
 
 import nltk
 import csv
@@ -17,14 +18,20 @@ from sklearn.svm import SVC
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 from nltk.corpus import stopwords
+from maalepinde import find_maalepinde
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from maalepinde.find_maalepinde import hent_maalepinde, EXCEL_FILE
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score, learning_curve
+
+from maalepinde.utils import MAALEPINDE_FORMAT
+
+SPAM_CSV: str = 'dataset/spam.csv'
 
 
 def _spamham_wordcloud(data, show: bool = True):
@@ -69,8 +76,25 @@ def _spamham_wordcloud(data, show: bool = True):
 
 
 def main(gen_wordcloud: bool = True, verbose: bool = True) -> None:
-    data = pd.read_csv('dataset/spam.csv', encoding='latin-1')
+
+
+
+
+    data = pd.read_csv(SPAM_CSV, encoding='latin-1')
     data.head()
+
+
+    # We expect to find the Excel file in the same directory as the maalepinde script.
+    excel_file: str = path.join(path.dirname(find_maalepinde.__file__), EXCEL_FILE)
+    maalepinde: MAALEPINDE_FORMAT = hent_maalepinde(excel_file, only_best=False)
+
+    with open("dataset/spam_and_ham_maalepind.csv", 'w+') as spamham_maalepind:
+        spamham_maalepind_writer = csv.writer(spamham_maalepind)
+
+        for row in data.iterrows():
+            # spamham_maalepind.write(line)
+            spamham_maalepind_writer.writerow("line")
+
 
     data = data.drop(["Unnamed: 2", "Unnamed: 3", "Unnamed: 4"], axis=1)
     data = data.rename(columns={"v2": "text", "v1": "label"})
@@ -109,37 +133,6 @@ def main(gen_wordcloud: bool = True, verbose: bool = True) -> None:
 
     if verbose is True:
         print("Total words in data set: ", len(total_counts))
-
-    # Sorting in decreasing order (Word with the highest frequency appears first)
-    vocab = sorted(total_counts, key=total_counts.get, reverse=True)
-
-    if verbose is True:
-        print(vocab[:60])
-
-    # Mapping from words to index
-    vocab_size = len(vocab)
-    word2idx = {}
-    #print vocab_size
-    for i, word in enumerate(vocab):
-        word2idx[word] = i
-
-    # Text to Vector
-    def text_to_vector(text):
-        word_vector = np.zeros(vocab_size)
-        for word in text.split(" "):
-            if word2idx.get(word) is None:
-                continue
-            else:
-                word_vector[word2idx.get(word)] += 1
-        return np.array(word_vector)
-
-    # Convert all titles to vectors
-    word_vectors = np.zeros((len(text), len(vocab)), dtype=np.int_)
-    for i, (_, text_) in enumerate(text.iterrows()):
-        word_vectors[i] = text_to_vector(text_[0])
-
-    if verbose:
-        print(word_vectors.shape)
 
     vectorizer = TfidfVectorizer()
     vectors = vectorizer.fit_transform(data['text'])
@@ -192,7 +185,7 @@ def main(gen_wordcloud: bool = True, verbose: bool = True) -> None:
     find(x)
 
     # Naive Bayes
-    y_pred_nb = svc.predict(X_test)
+    y_pred_nb = mnb.predict(X_test)
     y_true_nb = y_test
     cm = confusion_matrix(y_true_nb, y_pred_nb)
     f, ax = plt.subplots(figsize=(5,5))

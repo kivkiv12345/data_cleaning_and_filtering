@@ -1,12 +1,10 @@
 #!env/bin/python3
 
 import nltk
-import matplotlib
-import numpy as np
 from string import punctuation
 from wordcloud import WordCloud
 from nltk.corpus import stopwords
-from utils import MAALEPINDE_FORMAT
+from maalepinde.utils import MAALEPINDE_FORMAT
 from matplotlib import pyplot as plt
 
 

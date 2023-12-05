@@ -10,8 +10,8 @@ import nltk
 import pandas as pd
 from enum import Enum
 
-from utils import MAALEPINDE_FORMAT
-from visualization_and_wordcloud import draw_diagram_words_used, remove_stopwords, word_cloud
+from .utils import MAALEPINDE_FORMAT
+from .visualization_and_wordcloud import draw_diagram_words_used, remove_stopwords, word_cloud
 from pandas import DataFrame, Series
 from typing import Hashable, Sequence
 
