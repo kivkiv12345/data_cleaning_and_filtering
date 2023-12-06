@@ -123,6 +123,7 @@ if __name__ == '__main__':
     df: DataFrame = hent_maalepinde(EXCEL_FILE)
 
     df = filter_best(df)
+    # If we count the number of maalepinde before removing clutter, we can use our regex pattern.
     print(f"Num maalepinde:\t\t{sum(1 for maalepinde in df[_MAALEPINDE_COLUMN_NAME] for match in MAALEPIND_PATTERN.finditer(maalepinde))}")
     df: DataFrame = remove_maalepind_clutter(df)
     print(f"Num fags:\t\t\t{len(df)}")

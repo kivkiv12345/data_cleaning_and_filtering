@@ -14,22 +14,22 @@ import warnings
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from pandas import DataFrame
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 from nltk.corpus import stopwords
-from maalepinde import find_maalepinde
+from maalepinde.maalepinde_parser import hent_maalepinde, EXCEL_FILE, remove_maalepind_clutter
+from maalepinde import maalepinde_parser
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from maalepinde.find_maalepinde import hent_maalepinde, EXCEL_FILE
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score, learning_curve
 
-from maalepinde.utils import MAALEPINDE_FORMAT
 
 SPAM_CSV: str = 'dataset/spam.csv'
 
@@ -77,24 +77,8 @@ def _spamham_wordcloud(data, show: bool = True):
 
 def main(gen_wordcloud: bool = True, verbose: bool = True) -> None:
 
-
-
-
     data = pd.read_csv(SPAM_CSV, encoding='latin-1')
-    data.head()
-
-
-    # We expect to find the Excel file in the same directory as the maalepinde script.
-    excel_file: str = path.join(path.dirname(find_maalepinde.__file__), EXCEL_FILE)
-    maalepinde: MAALEPINDE_FORMAT = hent_maalepinde(excel_file, only_best=False)
-
-    with open("dataset/spam_and_ham_maalepind.csv", 'w+') as spamham_maalepind:
-        spamham_maalepind_writer = csv.writer(spamham_maalepind)
-
-        for row in data.iterrows():
-            # spamham_maalepind.write(line)
-            spamham_maalepind_writer.writerow("line")
-
+    # data.head()
 
     data = data.drop(["Unnamed: 2", "Unnamed: 3", "Unnamed: 4"], axis=1)
     data = data.rename(columns={"v2": "text", "v1": "label"})
@@ -109,7 +93,16 @@ def main(gen_wordcloud: bool = True, verbose: bool = True) -> None:
         _spamham_wordcloud(data)
 
     data = data.replace(['ham', 'spam'], [0, 1])
-    data.head(10)
+    # data.head(10)
+
+    # We expect to find the Excel file in the same directory as the maalepinde script.
+    excel_file: str = path.join(path.dirname(maalepinde_parser.__file__), EXCEL_FILE)
+    maalepinde: DataFrame = hent_maalepinde(excel_file)
+    maalepinde: DataFrame = remove_maalepind_clutter(maalepinde)
+
+    maalepinde: DataFrame = maalepinde["MÅLPINDE"]
+    maalepinde['v1'] = 3
+    data = pd.concat([data, maalepinde])
 
     nltk.download('stopwords')
 
@@ -123,7 +116,6 @@ def main(gen_wordcloud: bool = True, verbose: bool = True) -> None:
     data.head()
 
     text = pd.DataFrame(data['text'])
-    label = pd.DataFrame(data['label'])
 
     ## Counting how many times a word appears in the dataset
     total_counts = Counter()
@@ -144,45 +136,19 @@ def main(gen_wordcloud: bool = True, verbose: bool = True) -> None:
     # split the dataset into train and test set
     X_train, X_test, y_train, y_test = train_test_split(features, data['label'], test_size=0.15, random_state=111)
 
-    # initialize multiple classification models
-    svc = SVC(kernel='sigmoid', gamma=1.0)
-    knc = KNeighborsClassifier(n_neighbors=49)
+    # initialize Naive Bayes classification models
     mnb = MultinomialNB(alpha=0.2)
-    dtc = DecisionTreeClassifier(min_samples_split=7, random_state=111)
-    lrc = LogisticRegression(solver='liblinear', penalty='l1')
-    rfc = RandomForestClassifier(n_estimators=31, random_state=111)
-
-    # create a dictionary of variables and models
-    clfs = {'SVC': svc, 'KN': knc, 'NB': mnb, 'DT': dtc, 'LR': lrc, 'RF': rfc}
 
     # fit the data onto the models
     def train(clf, features, targets):
         clf.fit(features, targets)
 
-    def predict(clf, features):
-        return (clf.predict(features))
-
-    pred_scores_word_vectors = []
-    for k, v in clfs.items():
-        train(v, X_train, y_train)
-        pred = predict(v, X_test)
-        pred_scores_word_vectors.append((k, [accuracy_score(y_test, pred)]))
-
-    if verbose:
-        print(pred_scores_word_vectors)
-
-    # write functions to detect if the message is spam or not
-    def find(x):
-        if x == 1:
-            print("Message is SPAM")
-        else:
-            print("Message is NOT Spam")
+    train(mnb, X_train, y_train)
 
     newtext = ["Free entry"]
     integers = vectorizer.transform(newtext)
 
     x = mnb.predict(integers)
-    find(x)
 
     # Naive Bayes
     y_pred_nb = mnb.predict(X_test)
