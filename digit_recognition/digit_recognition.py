@@ -92,6 +92,19 @@ def use_trained_model() -> None:
     print(prediction.argmax())
 
 
+def nums_from_dataset(number: int, num_show: int) -> None:
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+    for img, num in zip(x_train, y_train):
+        if num == number:
+            plt.imshow(img, cmap='Greys')
+            plt.show()
+            num_show -= 1
+        if num_show <= 0:
+            break
+
+
 if __name__ == '__main__':
     # train_model()
-    use_trained_model()
+    # use_trained_model()
+    nums_from_dataset(3, 8)
