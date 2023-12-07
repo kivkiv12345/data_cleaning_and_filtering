@@ -6,7 +6,7 @@ from keras.datasets import mnist
 from keras.src.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense
 from keras.src.utils.np_utils import to_categorical
 from keras.models import load_model
-
+from numpy import ndarray
 
 # save input image dimensions
 img_rows, img_cols = 28, 28
@@ -104,7 +104,28 @@ def nums_from_dataset(number: int, num_show: int) -> None:
             break
 
 
+def ascii_from_dataset(number_to_print: int, skip_nums: int = 0) -> None:
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    bitmap: ndarray | None = next((img for img, dataset_number in zip(x_train, y_train) if dataset_number == number_to_print and (skip_nums := skip_nums - 1) <= 0), None)
+    assert bitmap is not None, f"Failed to find number '{number_to_print}' in the dataset"
+
+    for row in bitmap:
+        for pixel in row:
+            if pixel > 200:
+                print('##', end='')
+            elif pixel > 125:
+                print('**', end='')
+            elif pixel > 50:
+                print('--', end='')
+            else:
+                print('  ', end='')
+        print()  # Newline
+
+
 if __name__ == '__main__':
     # train_model()
     # use_trained_model()
-    nums_from_dataset(3, 8)
+    # nums_from_dataset(9, 8)
+    for i in range(10):
+        for j in range(100):
+            ascii_from_dataset(i, j)
